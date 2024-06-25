@@ -16,4 +16,4 @@ jobs:
         run: python -m pip install --upgrade pip pytest
 
       - name: Test with unittest
-        run: python3 -m unittest test_calc.py
+        run: python3 -m unittest test_nearby.py
