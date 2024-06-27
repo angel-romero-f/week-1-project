@@ -27,6 +27,21 @@ def fetch_nearby_places(api_key, location, radius, place_type, keyword):
     else:
         return None
 
+def fetch_geolocation(api_key, address):
+    endpoint_url = "https://maps.googleapis.com/maps/api/geocode/json"
+    params = {
+        'address': address,
+        'key': api_key
+    }
+    response = requests.get(endpoint_url, params=params)
+
+    if response.status_code == 200:
+        response = response.json()['results'][0]
+        return response['geometry']['location']
+    else:
+        return None
+
+
 def save_to_json(data, filename):
     with open(filename, 'w') as json_file:
         json.dump(data, json_file, indent=4)
@@ -36,12 +51,23 @@ if __name__ == "__main__":
     api_key = os.getenv('google_maps_key')
     
     # Location, radius, type, and keyword for the search
-    location = '40.706839018110415, -74.01084140000002'
-    radius = 1609
-    place_type = 'library'
-    keyword = 'study'
 
-    places_data = fetch_nearby_places(api_key, location, radius, place_type, keyword)
+    location = input("Enter your address to find places near you: ")
+    geolocation = fetch_geolocation(api_key, location)
+    while not geolocation:
+        location = input("Must enter a valid address, try again: ")
+        geolocation = fetch_geolocation(api_key, location)
+
+    geolocation = f"{geolocation['lat']},{geolocation['lng']}"
+
+    radius = int(input("Enter how far you are willing to travel for this location (in meters): "))
+
+    place_type = input("Enter the place type (i.e. library, cafe, etc..): ")
+
+    keyword = input("Enter a keyword (i.e. study, chill, fun, etc..): ")
+
+
+    places_data = fetch_nearby_places(api_key, geolocation, radius, place_type, keyword)
 
 
     if places_data:
