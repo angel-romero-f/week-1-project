@@ -1,6 +1,8 @@
 import requests
 import json
 import os
+import sqlalchemy as db
+import pandas as pd 
 
 def fetch_nearby_places(api_key, location, radius, place_type, keyword):
     
@@ -38,13 +40,41 @@ if __name__ == "__main__":
     radius = 1609
     place_type = 'library'
     keyword = 'study'
-    
-    
+
     places_data = fetch_nearby_places(api_key, location, radius, place_type, keyword)
-    
+
+
     if places_data:
         # Save the data to a JSON file
         save_to_json(places_data, 'nearby_places.json')
         print("Nearby places data has been saved to 'nearby_places.json'")
+
+        df = pd.json_normalize(places_data['results'])
+        
+        # Extract only the required columns
+        df = df[['name', 'geometry.location.lat', 'geometry.location.lng', 'opening_hours.open_now', 'vicinity']]
+        
+        # Rename columns to match desired database schema
+        df.rename(columns={
+            'geometry.location.lat': 'latitude',
+            'geometry.location.lng': 'longitude',
+            'opening_hours.open_now': 'open_now'
+        }, inplace=True)
+
+        # Create an SQLite database engine
+        engine = db.create_engine('sqlite:///locations.db')
+
+        # Create a table and insert the data into the SQLite database
+        df.to_sql('locations', con=engine, if_exists='replace', index=False)
+
+        with engine.connect() as connection:
+            query_result = connection.execute(db.text("SELECT * FROM locations;")).fetchall()
+            print(pd.DataFrame(query_result))
     else:
         print("Failed to retrieve data from the Google Maps API")
+    
+    
+
+
+    
+
