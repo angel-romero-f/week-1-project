@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     if places_data:
         # Save the data to a JSON file
-        save_to_json(places_data, 'nearby_places.json')
+        #save_to_json(places_data, 'nearby_places.json')
         print("Nearby places data has been saved to 'nearby_places.json'")
 
         df = pd.json_normalize(places_data['results'])
@@ -92,9 +92,9 @@ if __name__ == "__main__":
 
         # Create a table and insert the data into the SQLite database
         df.to_sql('locations', con=engine, if_exists='replace', index=False)
-
         with engine.connect() as connection:
-            query_result = connection.execute(db.text("SELECT * FROM locations;")).fetchall()
+            query_result = None
+            query_result = connection.execute(db.text("SELECT l.name, l.vicinity FROM locations l WHERE l.open_now = 1;")).fetchall()
             print(pd.DataFrame(query_result))
     else:
         print("Failed to retrieve data from the Google Maps API")
